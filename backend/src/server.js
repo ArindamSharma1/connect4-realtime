@@ -9,7 +9,7 @@ const { initDb, getLeaderboard } = require('./db');
 const app = express();
 const server = http.createServer(app);
 const cors = require('cors');
-app.use(cors()); // Enable CORS for Express Routes
+app.use(cors());
 const io = new Server(server, { cors: { origin: '*' } });
 
 const port = process.env.PORT || 4000;
@@ -48,7 +48,6 @@ app.get('/leaderboard', async (req, res) => {
     }
 });
 
-// Init DB only if not in test mode effectively, or just always nice to try
 initDb();
 
 server.listen(port, () => console.log(`Server listening ${port}`));

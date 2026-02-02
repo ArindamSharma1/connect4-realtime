@@ -16,8 +16,6 @@ async function send(event) {
     } catch (e) {
         console.warn('Kafka produce error', e.message);
     }
-    // Keep connection open in real app, but for simplicity/safety here we might disconnect or just keep it.
-    // The user prompt disconnects every time, which is inefficient but safe for low volume.
     await producer.disconnect();
 }
 module.exports = { send };

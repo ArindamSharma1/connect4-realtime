@@ -7,7 +7,7 @@ const inMemoryLeaderboard = new Map(); // username -> { wins, losses, draws }
 async function initDb() {
     if (process.env.DATABASE_URL) {
         pool = new Pool({ connectionString: process.env.DATABASE_URL });
-        // create tables if not exist - simple approach
+        // create tables if not exist
         try {
             await pool.query(`
         CREATE TABLE IF NOT EXISTS games (
@@ -49,7 +49,7 @@ async function persistFinishedGame(game, result) {
             player1: game.players[0].username,
             player2: game.players[1].username,
             result,
-            moves: game.moves, // store object directly
+            moves: game.moves,
             started_at: new Date(game.createdAt),
             finished_at: new Date(game.finishedAt)
         });

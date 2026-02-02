@@ -9,7 +9,6 @@ export default function JoinForm({ onJoined, onError, onStatus }) {
         socket.emit('join_queue', { username });
         socket.once('matched', (data) => onJoined({ username, ...data }));
         socket.once('waiting', (d) => onStatus(d.message));
-        // Basic error handling
         socket.once('error', (e) => onError(e.message));
     };
     return (

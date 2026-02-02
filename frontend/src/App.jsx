@@ -33,7 +33,6 @@ export default function App() {
 
     const showNotify = (msg, type = 'info') => {
         setNotification({ msg, type });
-        // Auto-hide after 5 seconds if it's just info
         if (type === 'info') setTimeout(() => setNotification({ msg: '', type: '' }), 5000);
     };
 
@@ -86,10 +85,8 @@ export default function App() {
         setNotification({ msg: '', type: '' });
         localStorage.removeItem('c4_session');
         // Ideally emit 'leave' if backend supported it, but disconnect handles cleanup mostly.
-        // We will just rejoin as fresh.
     };
 
-    // Determine if it's my turn
     const playerIndex = joined && joined.players[0] === joined.you ? 1 : 2;
     const isMyTurn = gameState && gameState.turn === playerIndex;
     const isGameActive = gameState && gameState.status === 'active';

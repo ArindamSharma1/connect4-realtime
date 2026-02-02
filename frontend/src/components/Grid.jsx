@@ -28,7 +28,6 @@ export default function Grid({ board, onDrop, disabled, myTurn }) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,64px)', gap: '4px', background: '#0055aa', padding: '10px', borderRadius: '8px' }}>
                 {board.flat().map((cell, idx) => {
-                    // const r = Math.floor(idx/7), c = idx%7;
                     let color = 'white'; // empty
                     if (cell === 1) color = '#ff4136'; // Player 1 Red
                     if (cell === 2) color = '#ffdc00'; // Player 2 Yellow
