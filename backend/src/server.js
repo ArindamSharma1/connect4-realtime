@@ -14,7 +14,6 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 const port = process.env.PORT || 4000;
 
-// initDb(); // ensures DB connection - handled via docker compose wait usually, but calling here is fine.
 
 const gameManager = createGameManager({ io, botFactory: createBot });
 
