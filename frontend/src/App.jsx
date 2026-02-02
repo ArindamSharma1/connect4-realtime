@@ -4,56 +4,65 @@ import JoinForm from './components/JoinForm';
 import Grid from './components/Grid';
 import axios from 'axios';
 
+function Notification({ message, type, onClose }) {
+    if (!message) return null;
+    const styles = {
+        padding: '10px',
+        margin: '10px auto',
+        borderRadius: '5px',
+        maxWidth: '400px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        color: '#fff',
+        backgroundColor: type === 'error' ? '#d9534f' : type === 'success' ? '#5cb85c' : '#5bc0de'
+    };
+    return (
+        <div style={styles}>
+            <span>{message}</span>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', marginLeft: 10 }}>✖</button>
+        </div>
+    );
+}
+
 export default function App() {
     const [joined, setJoined] = useState(null);
     const [gameState, setGameState] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
+    const [notification, setNotification] = useState({ msg: '', type: '' });
+
+    const showNotify = (msg, type = 'info') => {
+        setNotification({ msg, type });
+        // Auto-hide after 5 seconds if it's just info
+        if (type === 'info') setTimeout(() => setNotification({ msg: '', type: '' }), 5000);
+    };
 
     useEffect(() => {
         socket.on('state', data => setGameState(data));
-        // socket.on('waiting', d => console.log(d));
         socket.on('game_finished', d => {
             setGameState(prev => ({ ...prev, status: 'finished', winner: d.winner, result: d.result }));
-            alert(`Game Finished! Winner: ${d.winner || 'Draw'}`);
+            showNotify(`Game Over! Winner: ${d.winner || 'Draw'}`, 'success');
         });
-        socket.on('player_disconnected', d => alert(`${d.username} disconnected. They have 30s to rejoin.`));
-        socket.on('player_reconnected', d => alert(`${d.username} reconnected!`));
+        socket.on('player_disconnected', d => showNotify(`${d.username} disconnected. They have 30s to rejoin.`, 'error'));
+        socket.on('player_reconnected', d => showNotify(`${d.username} reconnected!`, 'success'));
         socket.on('reconnect_ack', d => {
-            if (d.success) {
-                setGameState({ board: d.board, turn: d.turn, status: d.status });
-                // We don't have players info here on rejoin ack easily without fetching or storing, 
-                // but 'joined' state might still be missing if page refreshed.
-                // For strict page refresh rejoin, we'd need to store username/gameId in localStorage.
-                // For now, assuming in-memory flow or user types same username to 'join' which triggers logic in backend?
-                // Actually backend 'rejoin' event is distinct. 
-            }
+            if (d.success) setGameState({ board: d.board, turn: d.turn, status: d.status });
         });
-
-        // Check localStorage for rejoin capability on mount
-        const saved = localStorage.getItem('c4_session');
-        if (saved) {
-            const { username, gameId } = JSON.parse(saved);
-            if (username && gameId) {
-                // Attempt invisible rejoin
-                // We need to know if game is still active? 
-                // For now, let's just let user use the Join form. 
-                // If they enter same username while game active, current backend logic might block 'join_queue' saying "already matches or waiting".
-                // The prompt says: "wait up to 10s... otherwise spawn bot".
-                // Reconnect logic: socket.emit('rejoin')
-            }
-        }
+        // Error handling global
+        socket.on('error', e => showNotify(e.message, 'error'));
 
         return () => {
             socket.off('state');
             socket.off('game_finished');
             socket.off('player_disconnected');
             socket.off('player_reconnected');
+            socket.off('reconnect_ack');
+            socket.off('error');
         };
     }, []);
 
     const onJoined = (data) => {
         setJoined(data);
-        // Save for potential rejoin
         localStorage.setItem('c4_session', JSON.stringify({ username: data.username, gameId: data.gameId }));
     };
 
@@ -67,8 +76,17 @@ export default function App() {
             const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000'}/leaderboard`);
             setLeaderboard(res.data);
         } catch (e) {
-            alert('Could not fetch leaderboard');
+            showNotify('Could not fetch leaderboard', 'error');
         }
+    };
+
+    const resetGame = () => {
+        setJoined(null);
+        setGameState(null);
+        setNotification({ msg: '', type: '' });
+        localStorage.removeItem('c4_session');
+        // Ideally emit 'leave' if backend supported it, but disconnect handles cleanup mostly.
+        // We will just rejoin as fresh.
     };
 
     // Determine if it's my turn
@@ -80,14 +98,44 @@ export default function App() {
         <div style={{ fontFamily: 'sans-serif', textAlign: 'center', padding: 20 }}>
             <h1>Connect 4 Real-time</h1>
 
+            <Notification
+                message={notification.msg}
+                type={notification.type}
+                onClose={() => setNotification({ msg: '', type: '' })}
+            />
+
             {!joined ? (
-                <JoinForm onJoined={onJoined} />
+                <JoinForm
+                    onJoined={onJoined}
+                    onError={(msg) => showNotify(msg, 'error')}
+                    onStatus={(msg) => showNotify(msg, 'info')}
+                />
             ) : (
                 <>
                     <div style={{ marginBottom: 20 }}>
                         <h3>Playing as: <strong>{joined.you}</strong> vs <strong>{joined.players.find(p => p !== joined.you)}</strong></h3>
                         <p>Game ID: <small>{joined.gameId}</small></p>
-                        {gameState && gameState.status === 'finished' && <h2 style={{ color: 'red' }}>Game Over! Result: {gameState.result}</h2>}
+                        {gameState && gameState.status === 'finished' && (
+                            <div style={{ margin: '20px 0' }}>
+                                <h2 style={{ color: gameState.winner ? '#28a745' : '#666' }}>
+                                    Result: {gameState.winner ? `${gameState.winner} Won!` : 'Draw!'}
+                                </h2>
+                                <button
+                                    onClick={resetGame}
+                                    style={{
+                                        padding: '12px 24px',
+                                        fontSize: '18px',
+                                        background: '#007bff',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Play Again
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <Grid

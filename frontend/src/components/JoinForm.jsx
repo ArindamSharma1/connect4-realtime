@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import socket from '../services/socket';
 
-export default function JoinForm({ onJoined }) {
+export default function JoinForm({ onJoined, onError, onStatus }) {
     const [username, setUsername] = useState('');
     const submit = (e) => {
         e.preventDefault();
         if (!username.trim()) return;
         socket.emit('join_queue', { username });
         socket.once('matched', (data) => onJoined({ username, ...data }));
-        socket.once('waiting', (d) => alert(d.message));
+        socket.once('waiting', (d) => onStatus(d.message));
         // Basic error handling
-        socket.once('error', (e) => alert(e.message));
+        socket.once('error', (e) => onError(e.message));
     };
     return (
         <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', maxWidth: '300px', margin: '20px auto' }}>
