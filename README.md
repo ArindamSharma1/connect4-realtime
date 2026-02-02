@@ -3,12 +3,19 @@
 Full-stack real-time multiplayer Connect Four game with deterministic bot, persistence, and optional analytics.
 
 ## Tech Stack
-* **Backend**: Node.js, Express, Socket.IO, PostgreSQL (with In-Memory Fallback), Kafka (optional)
+* **Backend**: Node.js, Express, Socket.IO, PostgreSQL (completed games only), In-Memory state for active games, Kafka (optional)
 * **Frontend**: React, Socket.IO Client
+
+## Known Limitations
+
+* Active games are stored in memory and will be lost if the server restarts.
+* Kafka analytics are mostly meant for demonstration and are optional.
+* Since usernames are session-based, there is no authentication layer in place.
+
 
 ## Quick Start (Manual / No Docker)
 
-Since you do not have Docker installed, you can run the app manually. The backend detects if no Database is available and switches to **In-Memory Mode** automatically.
+If you do not have Docker installed, you can run the app manually. The backend detects if no Database is available and switches to **In-Memory Mode** automatically.
 
 ### 1. Start Backend
 Open a terminal:
