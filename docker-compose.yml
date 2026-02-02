@@ -1,0 +1,57 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: connect4
+    ports: [ '5432:5432' ]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - '9092:9092'
+
+  backend:
+    build: ./backend
+    restart: always
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/connect4
+      KAFKA_BROKER: kafka:9092
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - kafka
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    # Frontend usually communicates via client browser, so 'backend' url refers to localhost from browser perspective, 
+    # but build time REACT_APP var needs to be set if we want it hardcoded. 
+    # Usually better to load at runtime or assume localhost.
+    environment:
+      REACT_APP_BACKEND_URL: http://localhost:4000
+
+volumes:
+  pgdata:
