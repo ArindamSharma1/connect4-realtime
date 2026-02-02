@@ -53,6 +53,14 @@ npm start
 *   **Reconnect**: 30s grace period for disconnected players to rejoin.
 *   **Analytics**: Emits events to Kafka `game-analytics` topic (optional).
 
+## Deployment
+
+*   **Frontend**: Hosted on [Vercel](https://vercel.com/)
+*   **Backend**: Hosted on [Render](https://render.com/)
+
+> [!IMPORTANT]
+> **Cold Start Warning:** The backend is hosted on Render's free tier. This instance spins down with inactivity. If you're visiting the site after some time, **please wait 1 minute** for the backend to wake up, then refresh the site.
+
 ## WebSocket Events
 
 | Event | Direction | Description |

@@ -44,8 +44,11 @@ app.get('/leaderboard', async (req, res) => {
         const data = await getLeaderboard();
         res.json(data);
     } catch (err) {
-        res.status(500).json({ error: err.message });
     }
+});
+
+app.get('/', (req, res) => {
+    res.send('Connect 4 Real-time Backend is Running!');
 });
 
 initDb();
